@@ -1,11 +1,12 @@
 # Terminal Themes
 
-A small collection of macOS Terminal.app color themes — story-rich palettes pulled from beaches, gardens, sunsets, and groves. Three tiers (light, dim, dark), all generated from standalone Python scripts so palettes stay editable in one place.
+> Arman did not write this readme, claude did. Arman just gave it inspiration and gaurdrails for the themes. He is not responsible for claude's attempts and inducing AI psychosis.
+
+13 macOS Terminal themes plus the Python scripts that build them. Three buckets — light, dim (mid-tone), dark.
 
 ## Themes
 
 ### Light
-Cream/sand backgrounds, deep botanical text. For bright rooms.
 
 | Preview | Theme |
 |---|---|
@@ -16,7 +17,8 @@ Cream/sand backgrounds, deep botanical text. For bright rooms.
 | ![Pink Wisteria](screenshots/light/Pink%20Wisteria.png) | **Pink Wisteria** — cascading blossoms in dappled sun |
 
 ### Dim
-Mid-tone backgrounds (~100–130 luma): lower glare than light, no high-contrast jolt of true dark. The compromise tier.
+
+Mid-tone backgrounds — easier on the eyes than light, not as dark as dark.
 
 | Preview | Theme |
 |---|---|
@@ -25,7 +27,8 @@ Mid-tone backgrounds (~100–130 luma): lower glare than light, no high-contrast
 | ![Terracotta Tile](screenshots/dim/Terracotta%20Tile.png) | **Terracotta Tile** — sun-warmed clay in a Mediterranean alley |
 
 ### Dark
-Warm dark — sunsets, twilights, woodsides, lantern-lit gardens. No cold blue-blacks.
+
+Warm dark backgrounds — no cold blue-blacks.
 
 | Preview | Theme |
 |---|---|
@@ -35,72 +38,61 @@ Warm dark — sunsets, twilights, woodsides, lantern-lit gardens. No cold blue-b
 | ![Redwood Nightfall](screenshots/dark/Redwood%20Nightfall.png) | **Redwood Nightfall** — coastal redwood grove at dusk |
 | ![Velvet Garden](screenshots/dark/Velvet%20Garden.png) | **Velvet Garden** — English walled garden at dusk, lantern-lit |
 
-## Installing
+## Install
 
-Double-click any `.terminal` file from `themes/<bucket>/`, then in **Terminal → Settings → Profiles** select the new profile and click **Default** to make it stick across new windows.
+Double-click a `.terminal` file in `themes/<bucket>/`. In **Terminal → Settings → Profiles**, select the new profile and click **Default**. If a re-import collides with an existing profile of the same name, delete the old one first.
 
-If a re-import collides with an existing profile of the same name, delete the old profile in Terminal first.
-
-## Layout
-
-```
-themes/
-  light/   *.terminal      ← what you double-click
-  dim/     *.terminal
-  dark/    *.terminal
-colors/
-  light/   gen_*_theme.py  ← edit RGB values here, re-run to rebuild
-  dim/     gen_*_theme.py
-  dark/    gen_*_theme.py
-screenshots/<bucket>/<name>.png
-preview.py            ← step through every theme inline (truecolor)
-gen_screenshots.py    ← rebuild the README screenshots
-```
-
-Bucket-folder name is the only source of truth for "is this light/dim/dark?" — moving a generator between buckets automatically reroutes its `.terminal` output and its preview ordering.
-
-## Previewing in your current terminal
+## Preview themes in your terminal
 
 ```bash
 /usr/bin/python3 preview.py
 ```
 
-Renders every palette inline using 24-bit truecolor escapes, so colors display correctly regardless of which theme your terminal is currently using. Press Enter to step through, Ctrl-C to quit. Each panel mimics the Claude Code interface (bullets, tool calls, dimmed code block, ✓/▣/☐ checkboxes, status bar) so you can see how the palette feels in real use.
+Steps through every theme using truecolor escapes, so colors render correctly no matter which theme your terminal is currently using. Press Enter to advance, Ctrl-C to quit.
 
-## Tweaking a palette
+## Edit a palette
 
-Each `colors/<bucket>/gen_<name>_theme.py` is self-contained. The palette is a block of `color(r, g, b)` calls near the top of the file — edit RGB values, then re-run:
+Each `colors/<bucket>/gen_*_theme.py` is one self-contained file. The palette is a block of `color(r, g, b)` calls near the top — change the RGB values and rerun:
 
 ```bash
 /usr/bin/python3 colors/light/gen_fiji_theme.py
 ```
 
-The output `.terminal` file lands in `themes/<same-bucket>/` automatically. Re-import in Terminal (delete the old profile first if the name collides).
+The `.terminal` file rebuilds in `themes/<same-bucket>/`. Re-import in Terminal.
 
-To refresh the README screenshots:
+## Rebuild screenshots
 
 ```bash
 /usr/bin/python3 gen_screenshots.py
 ```
 
-## Adding a new theme
+## Add a new theme
 
-1. Pick a bucket based on background luminance:
-   - `light` — luma > ~200 (cream, sand, paper)
-   - `dim`   — luma ~100–130 (fog, olive shadow, clay, weathered stone)
-   - `dark`  — luma < ~50 (twilight, basalt, deep wood)
+1. Pick a bucket — `light`, `dim`, or `dark`
 2. Copy any existing generator into `colors/<bucket>/` and rename it
-3. Edit the palette tuples + the `name` field + the filename in `out =`
-4. Update the docstring's first line — `preview.py` shows the part after ` — ` as the tagline under the banner
-5. Run the generator, then `gen_screenshots.py` to refresh the README
+3. Change the palette tuples, the `name` field, and the filename in `out =`
+4. Update the docstring's first line — the part after ` — ` shows up as the tagline in `preview.py`
+5. Run the generator, then `gen_screenshots.py`
 
-## Why scripts and not just `.terminal` files
+## Layout
 
-Color values in a `.terminal` file are not hex strings — they're `NSKeyedArchiver`-archived `NSColor` blobs (sRGB), embedded as base64 `<data>` in the XML plist. Terminal.app rejects plain hex in those slots. The `color(r, g, b)` helper at the top of each generator wraps that archive step; it's the only sane way to produce a valid blob, since hand-editing the XML doesn't work.
+```
+themes/{light,dim,dark}/   *.terminal
+colors/{light,dim,dark}/   gen_*_theme.py
+screenshots/{light,dim,dark}/   *.png
+preview.py
+gen_screenshots.py
+```
+
+The bucket folder name decides where a generator's `.terminal` file lands. To move a theme between buckets, `mv` the generator (and the `.terminal`) and rerun.
+
+## Why a script instead of editing the .terminal file directly
+
+Color values inside a `.terminal` file aren't hex strings — they're `NSKeyedArchiver`-archived `NSColor` blobs (sRGB), embedded as base64 in the XML. Terminal.app rejects plain hex in those slots, so hand-editing the XML doesn't work. The `color(r, g, b)` helper at the top of each generator is what builds a valid blob.
 
 ## Requirements
 
-System Python at `/usr/bin/python3` with PyObjC (for the generators) and Pillow (for the screenshot script). PyObjC ships with macOS's bundled Python; Pillow doesn't. On a fresh machine:
+System Python at `/usr/bin/python3` with PyObjC (ships with macOS) and Pillow (only needed by `gen_screenshots.py`):
 
 ```bash
 /usr/bin/python3 -m pip install --user pyobjc-framework-Cocoa pillow

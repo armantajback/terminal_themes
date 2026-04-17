@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = Path(__file__).parent
 sys.path.insert(0, str(ROOT))
 from preview import (
-    parse_palette, resolve, ANSI_NAMES, sample_rows, WIDTH, PAD,
+    parse_palette, resolve, sample_rows, swatch_segments, WIDTH, PAD,
 )
 
 FONT_PATH = "/System/Library/Fonts/Menlo.ttc"
@@ -31,13 +31,7 @@ def screenshot_rows(pal):
     rows.append([])
     rows.extend(sample_rows())
     rows.append([])
-    for prefix in ("ANSI", "BR"):
-        segs = []
-        for n in ANSI_NAMES:
-            if pal.get(f"{prefix}_{n.upper()}") is None:
-                continue
-            segs.append((f" {n:<8}", "auto", f"{prefix.lower()}:{n}"))
-        rows.append(segs)
+    rows.extend(swatch_segments(pal))
     rows.append([])
     return rows
 

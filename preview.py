@@ -63,11 +63,13 @@ def lerp(a, b, t):
 
 
 def resolve(pal: dict, key: str, fallback_bg=None):
-    if key == "fg":   return pal["FG"]
-    if key == "bg":   return pal["BG"]
-    if key == "bold": return pal.get("BOLD", pal["FG"])
-    if key == "dim":  return lerp(pal["FG"], pal["BG"], 0.55)
-    if key == "auto": return readable_on(fallback_bg if fallback_bg else pal["BG"])
+    if key == "fg":        return pal["FG"]
+    if key == "bg":        return pal["BG"]
+    if key == "bold":      return pal.get("BOLD", pal["FG"])
+    if key == "cursor":    return pal.get("CURSOR", pal["FG"])
+    if key == "selection": return pal.get("SELECTION", pal["BG"])
+    if key == "dim":       return lerp(pal["FG"], pal["BG"], 0.55)
+    if key == "auto":      return readable_on(fallback_bg if fallback_bg else pal["BG"])
     if key.startswith("ansi:"):
         return pal[f"ANSI_{key[5:].upper()}"]
     if key.startswith("br:"):
@@ -158,7 +160,7 @@ def sample_rows():
          ("Write installer that drops profiles into Terminal.app", "dim")],
         [],
         "DIVIDER",
-        [(">",), ("  try a prompt…", "dim")],
+        [(">  ",), (" ", "auto", "cursor"), (" try a prompt…", "dim")],
         "DIVIDER",
         [("▸▸ ", "ansi:cyan"), ("auto mode on",), ("  ·  ", "dim"),
          (" ◇ preview needs your input ", "auto", "br:cyan"),
@@ -168,22 +170,25 @@ def sample_rows():
     ]
 
 
-def swatch_rows(pal: dict):
-    BG = pal["BG"]
+def swatch_segments(pal: dict):
+    """Swatch rows as list-of-segment-lists, shared between preview and screenshots.
+    Two ANSI rows (normal + bright) plus a third row for cursor / selection / bold."""
     rows = []
     for prefix in ("ANSI", "BR"):
-        cells = []
+        segs = []
         for n in ANSI_NAMES:
-            rgb = pal.get(f"{prefix}_{n.upper()}")
-            if rgb is None:
+            if pal.get(f"{prefix}_{n.upper()}") is None:
                 continue
-            label_rgb = readable_on(rgb)
-            cells.append(f"{bg_esc(rgb)}{fg_esc(label_rgb)} {n:<8}{RESET}")
-        body = f"{bg_esc(BG)}{PAD}" + "".join(cells)
-        # pad remaining space in BG
-        visible = len(PAD) + sum(len(f" {n:<8}") for n in ANSI_NAMES)
-        body += f"{bg_esc(BG)}" + " " * max(0, WIDTH - visible) + RESET
-        rows.append(body)
+            segs.append((f" {n:<8}", "auto", f"{prefix.lower()}:{n}"))
+        rows.append(segs)
+    extras = []
+    if pal.get("CURSOR"):
+        extras.append((f" {'cursor':<9}", "auto", "cursor"))
+    if pal.get("SELECTION"):
+        extras.append((f" {'selection':<9}", "auto", "selection"))
+    if pal.get("BOLD"):
+        extras.append((f" {'bold':<9}", "bold"))
+    rows.append(extras)
     return rows
 
 
@@ -200,8 +205,8 @@ def render(pal: dict) -> None:
         else:
             print(render_row(pal, row))
     print(render_row(pal, []))
-    for row in swatch_rows(pal):
-        print(row)
+    for row in swatch_segments(pal):
+        print(render_row(pal, row))
     print(render_row(pal, []))
     print()
 
